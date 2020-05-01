@@ -5,6 +5,7 @@
 
 #include "UARTLink.h"
 
+
 class STM32Flasher {
    public:
     STM32Flasher(std::string port);
@@ -14,9 +15,15 @@ class STM32Flasher {
     void readChip();
 
    private:
-   uint8_t buffer [256];
+
+   static const uint8_t ACK = 0x79;
+   static const uint8_t NACK = 0x1F;
 
    UARTLink *uart;
+
+   uint8_t buffer [256];
+
+   void checkResponse();
 };
 
 #endif
