@@ -21,9 +21,23 @@ class STM32Flasher {
 
    UARTLink *uart;
 
-   uint8_t buffer [256];
+   UARTLink::buffer_struct *buffer;
+   //UARTLink::buffer_struct *writing_buffer;
+
+  // uint8_t buffer [256];
 
    void checkResponse();
+
+   void openConnection();
+   void getCommand();
+   void getVersionCommand();
+   void getIdCommand();
+   void readMemoryCommand(uint32_t start_address, uint8_t length);
+   void goCommand(uint32_t address);
+
+   private:
+   void writeCommand(uint8_t command);
+   void writeAddress(uint32_t address);
 };
 
 #endif

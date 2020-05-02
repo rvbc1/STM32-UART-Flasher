@@ -8,6 +8,15 @@ int main() {
     STM32Flasher *flasher = new STM32Flasher("/dev/ttyUSB0");
     //flasher->connect();
     //flasher->readChip();
+    // uint32_t start_address = 0x8000000;
+
+
+    // std::cout << std::hex <<(int) *((uint8_t *) &start_address + 0) << std::endl;
+    // std::cout << std::hex <<(int) *((uint8_t *) &start_address + 1) << std::endl;
+    // std::cout << std::hex <<(int) *((uint8_t *) &start_address + 2) << std::endl;
+    // std::cout << std::hex <<(int) *((uint8_t *) &start_address + 3) << std::endl;
+
+
 
 
     //  uint8_t x = 0x11;
