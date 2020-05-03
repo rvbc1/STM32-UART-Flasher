@@ -4,6 +4,7 @@
 #include <string>
 
 #include "UARTLink.h"
+#include "FileReader.h"
 
 
 class STM32Flasher {
@@ -13,6 +14,9 @@ class STM32Flasher {
     void connect();
 
     void readChip();
+
+    void flashFile(FileReader::file_struct file);
+    //void flashFile(uint8_t *data, uint16_t size);
 
    private:
 
@@ -34,6 +38,9 @@ class STM32Flasher {
    void getIdCommand();
    void readMemoryCommand(uint32_t start_address, uint8_t length);
    void goCommand(uint32_t address);
+   void flashCommand(uint32_t start_address, uint8_t* buffer, uint16_t length);
+   void eraseCommand();
+  
 
    private:
    void writeCommand(uint8_t command);

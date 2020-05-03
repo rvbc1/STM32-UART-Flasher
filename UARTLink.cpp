@@ -6,7 +6,7 @@
 #include "rs232.h"
 
 UARTLink::UARTLink(std::string port) {
-    com_port = 18;      /* /dev/ttyS0 (COM1 on windows) */
+    com_port = 17;      /* /dev/ttyS0 (COM1 on windows) */
     baud_rate = 115200; /* 9600 baud */
     // buffer_size = 256;
     buffer.size = writing_buffer.size = 0;
@@ -38,6 +38,14 @@ void UARTLink::setSpeed() {
 }
 
 void UARTLink::writeData() {
+    for(int i = 0; i < writing_buffer.size; i++){
+    std::cout << "<< ";
+
+    std::cout << "0x" << std::hex << (int)writing_buffer.data[i] << " ";
+
+    std::cout << std::endl;
+    }
+
     RS232_SendBuf(com_port, writing_buffer.data, writing_buffer.size);
     writing_buffer.size = 0;
 }

@@ -17,193 +17,18 @@ STM32Flasher::STM32Flasher(std::string port) {
     openConnection();
     getCommand();
 
-    readMemoryCommand(0x80000FF, 0xFF);
-
-    goCommand(0x8000000);
-
-    /*
-    //GET_ID
-    writeCommand(0x02);
-    checkResponse();
-
-    //GET
-    writeCommand(0x00);
-    checkResponse();
-    
-
-    writeCommand(0x11);
-    checkResponse();
-
-    uart->writeData(0x08);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x08);
-    checkResponse();
-
-    uart->writeData(0x00);
-    uart->writeData(0xFF);
-    checkResponse();
-
-    //GET
-    writeCommand(0x02);
-    checkResponse();
-
-    
-//MEMORY
-    writeCommand(0x11);
-    checkResponse();
-
-    uart->writeData(0x08);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x08);
-    checkResponse();
-
-    uart->writeData(0x00);
-    uart->writeData(0xFF);
-    checkResponse();
-
-    //MEMORY
-    writeCommand(0x11);
-    checkResponse();
-
-    uart->writeData(0x08);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x08);
-    checkResponse();
-
-    uart->writeData(0x00);
-    uart->writeData(0xFF);
-    checkResponse();
-
-        //MEMORY
-    writeCommand(0x11);
-    checkResponse();
-
-    uart->writeData(0x08);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x08);
-    checkResponse();
-
-    uart->writeData(0x00);
-    uart->writeData(0xFF);
-    checkResponse();
+    //readMemoryCommand(0x8000000, 0xFF);
+    //eraseCommand();
+    //readMemoryCommand(0x8000000, 0xFF);
+    //uint8_t test;
+    //flashCommand(0x8000000, &test, 0xFF);
+    //readMemoryCommand(0x8000000, 0xFF);
 
 
 
-
-
-
-
-
-
-
-    //MEMORY
-    writeCommand(0x11);
-    checkResponse();
-
-    uart->writeData(0x1F);
-    uart->writeData(0xFF);
-    uart->writeData(0xF8);
-    uart->writeData(0x00);
-    uart->writeData(0x18);
-    checkResponse();
-
-    uart->writeData(0x0F);
-    uart->writeData(0xF0);
-    checkResponse();
-
-
-    //MEMORY
-    writeCommand(0x11);
-    checkResponse();
-
-    uart->writeData(0x1F);
-    uart->writeData(0xFF);
-    uart->writeData(0xF8);
-    uart->writeData(0x00);
-    uart->writeData(0x18);
-    checkResponse();
-
-    uart->writeData(0x0F);
-    uart->writeData(0xF0);
-    checkResponse();
-
-
-    //GET
-    writeCommand(0x02);
-    checkResponse();
-
-
-    //MEMORY
-    writeCommand(0x11);
-    checkResponse();
-
-    uart->writeData(0x08);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x00);
-    uart->writeData(0x08);
-    checkResponse();
-
-    uart->writeData(0xFF);
-    uart->writeData(0x00);
-    checkResponse();
-*/
-
-    // for (uint8_t j = 1; j <= 0xFF; j++) {
-    //     int ok = -1;
-    //     for (uint8_t i = 0; i <= 0xFF; i++) {
-    //         //READ MEMORY command
-    //         writeCommand(0x11);
-    //         //uart->writeData(0x11);
-    //         //uart->writeData(0xEE);
-
-    //         checkResponse();
-
-    //         //write addres
-    //         uart->writeData(0x60);
-    //         uart->writeData(0x00);
-    //         uart->writeData(0x00);
-    //         uart->writeData(0x00);
-    //         uart->writeData(0x60);
-    //         checkResponse();
-    //         //size
-    //         // writeCommand(0x11);
-    //         // uart->writeData(0x11);
-    //         // uart->writeData(0xee);
-    //         uart->writeData(0x11);
-    //         uart->writeData(i);
-    //         // writeCommand(0x20);
-    //         checkResponse();
-    //         //  checkResponse();
-    //         if (buffer[0] == ACK) {
-    //             ok = i;
-    //             break;
-    //         }
-
-    //         if (i == 255) {
-    //             break;
-    //         }
-
-    //         //std::cout << std::endl;
-    //     }
-
-    //     std::cout << "For 0x" << std::hex << (int)j <<  " ok is 0x" << std::hex << (int)ok << std::endl;
-    //     if(j == 255){
-    //         break;
-    //     }
-    // }
 }
 
 void STM32Flasher::openConnection() {
-    // uart->writeData(0x7F);
     uart->addDataToBufferTX(0x7F);
     uart->writeData();
     checkResponse();
@@ -256,13 +81,56 @@ void STM32Flasher::goCommand(uint32_t address){
     checkResponse();
 }
 
+void STM32Flasher::flashCommand(uint32_t start_address, uint8_t* buffer, uint16_t length){
+    writeCommand(0x31);
+    checkResponse();
+    writeAddress(start_address);
+    checkResponse();
+    uart->addDataToBufferTX(length);
+    uint8_t xor_checksum = 0x00;
+    xor_checksum ^= length;
+    for(int i = 0; i <= length; i++){
+        uart->addDataToBufferTX(buffer[i]);
+        xor_checksum ^= buffer[i];
+    }
+    uart->addDataToBufferTX(xor_checksum);
+    uart->writeData();
+    checkResponse();
+}
+
+void STM32Flasher::eraseCommand(){
+    writeCommand(0x43);
+    checkResponse();
+    // uart->addDataToBufferTX(0x00);
+    // uart->addDataToBufferTX(0x00);
+    // uart->addDataToBufferTX(0x00);
+    // uart->writeData();
+    writeCommand(0xFF);
+    checkResponse();
+}
+
 void STM32Flasher::writeCommand(uint8_t command) {
     uart->addDataToBufferTX(command);
     uart->addDataToBufferTX(~command);
     uart->writeData();
-    // uart->writeData(command);
-    // uart->writeData(~command);
 }
+
+void STM32Flasher::flashFile(FileReader::file_struct file){
+    int pages = file.size / 256;
+    int unfull_page_size = file.size - pages * 256;
+    int address = 0;
+    eraseCommand();
+    for(int page_counter = 0; page_counter < pages; page_counter ++, address += 256){
+        flashCommand(0x8000000 + address, &file.data[address], 0xff);
+    }
+    flashCommand(0x8000000 + address, &file.data[address], unfull_page_size - 1);
+
+    goCommand(0x8000000);
+}
+
+// void flashFile(uint8_t *data, uint16_t size){
+
+// }
 
 void STM32Flasher::writeAddress(uint32_t address){
     uint8_t xor_checksum = 0x00;
@@ -292,8 +160,6 @@ void STM32Flasher::checkResponse() {
 
 void STM32Flasher::connect() {
 }
-
-//0x8000000
 
 void STM32Flasher::readChip() {
 }
