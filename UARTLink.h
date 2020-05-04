@@ -21,7 +21,7 @@ class UARTLink {
     buffer_struct writing_buffer;
 
     UARTLink(std::string port);
-    int openPort();
+    uint8_t openPort();
     void closePort();
 
     void setFlags();
@@ -55,6 +55,9 @@ class UARTLink {
     int serial_port;
     struct termios tty;
     char read_buf[256];
+    uint8_t port_opened = false;
+
+    void errorMsg();
 };
 
 #endif

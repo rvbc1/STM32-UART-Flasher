@@ -14,9 +14,6 @@
 #include "rs232.h"
 
 
-//#include "crc.h"
-//#include "QDebug"
-
 #include "string"
 
 uint32_t crc32(uint32_t crc, const char *buf, size_t len)
