@@ -23,6 +23,19 @@ class STM32Flasher {
    static const uint8_t ACK = 0x79;
    static const uint8_t NACK = 0x1F;
 
+   static const uint8_t ERASE_COMMAND = 0x43;
+   static const uint8_t FULL_CHIP_ERASE_COMMAND = 0xFF;
+
+
+   static const uint8_t GO_COMMAND = 0x21;
+   static const uint8_t WRITE_MEMORY_COMMAND = 0x31;
+   static const uint8_t READ_MEMORY_COMMAND = 0x11; 
+   static const uint8_t GET_ID_COMMAND = 0x02;
+   static const uint8_t START_CODE = 0x7F;
+   static const uint8_t GET_VERSION_COMMAND = 0x01;
+   static const uint8_t GET_COMMAND = 0x00;
+
+
    UARTLink *uart;
 
    UARTLink::buffer_struct *buffer;

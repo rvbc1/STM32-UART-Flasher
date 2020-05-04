@@ -29,13 +29,13 @@ STM32Flasher::STM32Flasher(std::string port) {
 }
 
 void STM32Flasher::openConnection() {
-    uart->addDataToBufferTX(0x7F);
+    uart->addDataToBufferTX(START_CODE);
     uart->writeData();
     checkResponse();
 }
 
 void STM32Flasher::getCommand() {
-    writeCommand(0x00);
+    writeCommand(GET_COMMAND);
     checkResponse();
 
     std::cout << "Frame size: " << std::dec << +buffer->data[1] << std::endl;
@@ -43,17 +43,17 @@ void STM32Flasher::getCommand() {
 }
 
 void STM32Flasher::getVersionCommand() {
-    writeCommand(0x01);
+    writeCommand(GET_VERSION_COMMAND);
     checkResponse();
 }
 
 void STM32Flasher::getIdCommand() {
-    writeCommand(0x02);
+    writeCommand(GET_ID_COMMAND);
     checkResponse();
 }
 
 void STM32Flasher::readMemoryCommand(uint32_t start_address, uint8_t length) {
-    writeCommand(0x11);
+    writeCommand(READ_MEMORY_COMMAND);
     checkResponse();
 
 
@@ -75,14 +75,14 @@ void STM32Flasher::readMemoryCommand(uint32_t start_address, uint8_t length) {
 }
 
 void STM32Flasher::goCommand(uint32_t address){
-    writeCommand(0x21);
+    writeCommand(GO_COMMAND);
     checkResponse();
     writeAddress(address);
     checkResponse();
 }
 
 void STM32Flasher::flashCommand(uint32_t start_address, uint8_t* buffer, uint16_t length){
-    writeCommand(0x31);
+    writeCommand(WRITE_MEMORY_COMMAND);
     checkResponse();
     writeAddress(start_address);
     checkResponse();
@@ -99,13 +99,13 @@ void STM32Flasher::flashCommand(uint32_t start_address, uint8_t* buffer, uint16_
 }
 
 void STM32Flasher::eraseCommand(){
-    writeCommand(0x43);
+    writeCommand(ERASE_COMMAND);
     checkResponse();
     // uart->addDataToBufferTX(0x00);
     // uart->addDataToBufferTX(0x00);
     // uart->addDataToBufferTX(0x00);
     // uart->writeData();
-    writeCommand(0xFF);
+    writeCommand(FULL_CHIP_ERASE_COMMAND);
     checkResponse();
 }
 
@@ -116,9 +116,9 @@ void STM32Flasher::writeCommand(uint8_t command) {
 }
 
 void STM32Flasher::flashFile(FileReader::file_struct file){
-    int pages = file.size / 256;
-    int unfull_page_size = file.size - pages * 256;
-    int address = 0;
+    uint16_t pages = file.size / 256;
+    uint16_t unfull_page_size = file.size - pages * 256;
+    uint32_t address = 0;
     eraseCommand();
     for(int page_counter = 0; page_counter < pages; page_counter ++, address += 256){
         flashCommand(0x8000000 + address, &file.data[address], 0xff);

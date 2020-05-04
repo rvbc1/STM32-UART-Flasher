@@ -12,7 +12,8 @@ FileReader::FileReader(std::string file_path) {
         file.read(memblock, size);
         file.close();
 
-        std::cout << "the entire file content is in memory, " << size << " bytes";
+        //std::cout << "the entire file content is in memory, " << size << " bytes";
+        printFile();
 
         //delete[] memblock;
         this->file.size = size;
@@ -39,7 +40,7 @@ void FileReader::printFile() {
 void FileReader::printPages() {
     std::cout << "the entire file content is in memory, " << size << " bytes" << std::endl;
     int pages = size / 256;
-    unsigned int unfull_page_size = size - (int)(pages * 256);
+    int unfull_page_size = size - (int)(pages * 256);
     if (unfull_page_size > 0) {
         std::cout << "it is  " << pages << " full pages and " << unfull_page_size << " bytes at last page" << std::endl;
     } else {
