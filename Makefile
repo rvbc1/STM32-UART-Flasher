@@ -1,7 +1,7 @@
-all: compile run
+all: compile
 
 compile:
-	g++ -o main -Wall *.cpp *.c
+	g++ -o STM32-UART-Flasher -Wall *.cpp *.c
 
 run:
 	./main

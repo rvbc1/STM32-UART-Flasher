@@ -16,7 +16,7 @@ class UARTLink {
         uint8_t* data;
         uint16_t size;
         uint16_t max_size;
-    } buffer;
+    } reading_buffer;
 
     buffer_struct writing_buffer;
 
@@ -29,7 +29,7 @@ class UARTLink {
     void setSpeed();
 
     void writeData();
-    void writeData(uint8_t byte);
+    //void writeData(uint8_t byte);
 
 
     int waitForResponse(uint64_t timeout);
@@ -56,6 +56,8 @@ class UARTLink {
     struct termios tty;
     char read_buf[256];
     uint8_t port_opened = false;
+
+    void printData(std::string prefix, buffer_struct buffer);
 
     void errorMsg();
 };
