@@ -7,12 +7,13 @@
 
 #define DEBUG
 
-UARTLink::UARTLink(std::string port) {
+UARTLink::UARTLink(std::string port, int baud_rate) {
     com_port = RS232_GetPortnr(port.c_str()); /* /dev/ttyS0 (COM1 on windows) */
-    baud_rate = 115200;                       /* 9600 baud */
+    this->baud_rate = baud_rate;              /* 9600 baud */
 
     reading_buffer.size = writing_buffer.size = 0;
-    reading_buffer.max_size = writing_buffer.max_size = 256;
+    reading_buffer.max_size = 256;
+    writing_buffer.max_size = 1024;
 
     reading_buffer.data = new uint8_t[reading_buffer.max_size];
     writing_buffer.data = new uint8_t[writing_buffer.max_size];
@@ -35,12 +36,35 @@ uint8_t UARTLink::openPort() {
     return port_opened;
 }
 
+void UARTLink::setBaudRate(int newBaurdRate) {
+    baud_rate = newBaurdRate;
+}
+
+void UARTLink::changeBaudRate(int newBaurdRate) {
+    if (port_opened) {
+        closePort();
+    }
+    baud_rate = newBaurdRate;
+    openPort();
+}
+
 void UARTLink::addDataToBufferTX(uint8_t data) {
-    writing_buffer.data[writing_buffer.size] = data;
-    writing_buffer.size++;
+    if (writing_buffer.size < writing_buffer.max_size) {
+        writing_buffer.data[writing_buffer.size] = data;
+        writing_buffer.size++;
+    } else {
+        std::cout << "writing buffer is full\n";
+    }
+}
+
+void UARTLink::addDataToBufferTX(std::string data) {
+    for (int i = 0; i < static_cast<int>(data.size()); i++) {
+        addDataToBufferTX(data[i]);
+    }
 }
 
 void UARTLink::closePort() {
+    RS232_CloseComport(com_port);
 }
 
 void UARTLink::setFlags() {
@@ -51,7 +75,7 @@ void UARTLink::setSpeed() {
 
 void UARTLink::writeData() {
 #ifdef DEBUG
-printData("<< ", writing_buffer);
+    printData("<< ", writing_buffer);
 #endif
 
     if (port_opened) {
@@ -76,9 +100,35 @@ printData("<< ", writing_buffer);
 // }
 
 int UARTLink::available() {
+    return 0;
 }
 
 int UARTLink::waitForResponse(uint64_t timeout) {
+    auto start = std::chrono::system_clock::now();
+
+    auto end = start;
+
+    std::chrono::milliseconds ms{1000};
+
+    reading_buffer.size = 0;
+    while (/*(reading_buffer.size == 0) && */ (end - start < ms)) {
+        end = std::chrono::system_clock::now();
+
+        if (port_opened) {
+            reading_buffer.size += RS232_PollComport(com_port, reading_buffer.data + reading_buffer.size, reading_buffer.max_size);
+
+        } else {
+            errorMsg();
+        }
+    }
+#ifdef DEBUG
+    printData(">> ", reading_buffer);
+#endif
+
+    return reading_buffer.size;
+}
+
+int UARTLink::waitForFirstResponse(uint64_t timeout) {
     auto start = std::chrono::system_clock::now();
 
     auto end = start;
@@ -90,7 +140,7 @@ int UARTLink::waitForResponse(uint64_t timeout) {
         end = std::chrono::system_clock::now();
 
         if (port_opened) {
-            reading_buffer.size = RS232_PollComport(com_port, reading_buffer.data, reading_buffer.max_size);
+            reading_buffer.size += RS232_PollComport(com_port, reading_buffer.data + reading_buffer.size, reading_buffer.max_size);
 
         } else {
             errorMsg();
@@ -111,15 +161,14 @@ void UARTLink::errorMsg() {
     std::cout << "Port is not open!" << std::endl;
 }
 
-void UARTLink::printData(std::string prefix, buffer_struct buffer){
+void UARTLink::printData(std::string prefix, buffer_struct buffer) {
     std::cout << prefix;
     for (int i = 0; i < buffer.size; i++) {
-        if(buffer.data[i] <= 0x0F){
+        if (buffer.data[i] <= 0x0F) {
             std::cout << "0x0" << std::hex << (int)buffer.data[i] << " ";
         } else {
             std::cout << "0x" << std::hex << (int)buffer.data[i] << " ";
         }
-
     }
     std::cout << std::endl;
 }

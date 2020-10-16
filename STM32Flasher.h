@@ -6,9 +6,11 @@
 #include "FileReader.h"
 #include "UARTLink.h"
 
+#define DEFAULT_BAUD_RATE_STM_FLASHER 115200
+
 class STM32Flasher {
    public:
-    STM32Flasher(std::string port);
+    STM32Flasher(std::string port, int baudRate = DEFAULT_BAUD_RATE_STM_FLASHER);
 
     void connect();
 

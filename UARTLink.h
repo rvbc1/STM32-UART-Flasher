@@ -5,10 +5,12 @@
 #include <fcntl.h>  // Contains file controls like O_RDWR
 #include <stdio.h>
 #include <string.h>
-#include <termios.h>  // Contains POSIX terminal control definitions
-#include <unistd.h>   // write(), read(), close()
+//#include <termios.h>  // Contains POSIX terminal control definitions
+#include <unistd.h>  // write(), read(), close()
 
 #include <string>
+
+#define DEFAULT_BAUD_RATE_UART_LINK 9600
 
 class UARTLink {
    public:
@@ -20,8 +22,13 @@ class UARTLink {
 
     buffer_struct writing_buffer;
 
-    UARTLink(std::string port);
+    // UARTLink(std::string port);
+    UARTLink(std::string port, int baud_rate = DEFAULT_BAUD_RATE_UART_LINK);
     uint8_t openPort();
+
+    void setBaudRate(int newBaurdRate);
+    void changeBaudRate(int newBaurdRate);
+
     void closePort();
 
     void setFlags();
@@ -31,10 +38,11 @@ class UARTLink {
     void writeData();
     //void writeData(uint8_t byte);
 
-
     int waitForResponse(uint64_t timeout);
+    int waitForFirstResponse(uint64_t timeout);
 
     void addDataToBufferTX(uint8_t data);
+    void addDataToBufferTX(std::string data);
 
     int available();
     buffer_struct* getBuff();
@@ -53,7 +61,7 @@ class UARTLink {
    private:
     std::string port;
     int serial_port;
-    struct termios tty;
+    //struct termios tty;
     char read_buf[256];
     uint8_t port_opened = false;
 

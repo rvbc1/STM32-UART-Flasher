@@ -1,8 +1,6 @@
 #include "FileReader.h"
 
 FileReader::FileReader(std::string file_path) {
-    // std::streampos size;
-    // char* memblock;
 
     std::ifstream file(file_path, std::ios::in | std::ios::binary | std::ios::ate);
     if (file.is_open()) {
@@ -12,18 +10,14 @@ FileReader::FileReader(std::string file_path) {
         file.read(memblock, size);
         file.close();
 
-        //std::cout << "the entire file content is in memory, " << size << " bytes";
-        printFile();
-
-        //delete[] memblock;
         this->file.size = size;
-        this->file.data = (uint8_t*) memblock;
+        this->file.data = (uint8_t*)memblock;
     } else
         std::cout << "Unable to open file";
 }
 
 void FileReader::printFile() {
-    for (int i = 0; i < file.size; i++) {
+    for (uint32_t i = 0; i < file.size; i++) {
         if (i % 16 == 0) {
             std::cout << std::endl;
         }
@@ -50,6 +44,6 @@ void FileReader::printPages() {
     std::cout << "because " << pages << " * 256 + " << unfull_page_size << " = " << pages * 256 << " + " << unfull_page_size << " = " << pages * 256 + unfull_page_size << std::endl;
 }
 
-FileReader::file_struct FileReader::getFile(){
+FileReader::file_struct FileReader::getFile() {
     return file;
 }

@@ -9,7 +9,7 @@ class FileReader {
    public:
    struct file_struct{
        uint8_t *data;
-       uint16_t size;
+       uint32_t size;
    };
     FileReader(std::string file_path);
     void printFile();
@@ -17,8 +17,7 @@ class FileReader {
     file_struct getFile();
 
    private:
-    //std::streampos size;
-    uint16_t size;
+    uint32_t size;
     char* memblock;
     file_struct file;
 };

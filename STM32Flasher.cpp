@@ -7,8 +7,8 @@ void printInfo(std::string info) {
     std::cout << info << std::endl;
 }
 
-STM32Flasher::STM32Flasher(std::string port) {
-    uart = new UARTLink(port);
+STM32Flasher::STM32Flasher(std::string port, int baudRate) {
+    uart = new UARTLink(port, baudRate);
     is_port_open = uart->openPort();
     //  uint8_t *buffer = uart->getBuff();
     buffer = uart->getBuff();
@@ -168,7 +168,7 @@ uint8_t STM32Flasher::checkResponse(ack_pos pos) {
     uint8_t ack_at_right_pos = false;
 
     if (is_port_open) {
-        buffer->size = uart->waitForResponse(500);
+        buffer->size = uart->waitForFirstResponse(500);
         if (buffer->size > 0) {
             switch (pos) {
                 case NONE_ACK:
