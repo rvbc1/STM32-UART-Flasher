@@ -108,7 +108,7 @@ int UARTLink::waitForResponse(uint64_t timeout) {
 
     auto end = start;
 
-    std::chrono::milliseconds ms{1000};
+    std::chrono::milliseconds ms{timeout};
 
     reading_buffer.size = 0;
     while (/*(reading_buffer.size == 0) && */ (end - start < ms)) {
@@ -120,6 +120,7 @@ int UARTLink::waitForResponse(uint64_t timeout) {
         } else {
             errorMsg();
         }
+
     }
 #ifdef DEBUG
     printData(">> ", reading_buffer);
@@ -133,10 +134,10 @@ int UARTLink::waitForFirstResponse(uint64_t timeout) {
 
     auto end = start;
 
-    std::chrono::milliseconds ms{1000};
+    std::chrono::milliseconds ms{timeout};
 
     reading_buffer.size = 0;
-    while ((reading_buffer.size == 0) && (end - start < ms)) {
+    while ((reading_buffer.size == 0)) {
         end = std::chrono::system_clock::now();
 
         if (port_opened) {

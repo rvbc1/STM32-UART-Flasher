@@ -32,43 +32,50 @@ void STM32Flasher::openConnection() {
         is_connection_open = checkResponse(ACK_AT_BEGIN);
 
 #if defined(__linux__) || defined(__FreeBSD__) || (__Windows__)
-        if (is_connection_open == false){
+        if (is_connection_open == false) {
             printInfo("Cannot start comunication with uC");
             printInfo("Check wiring & set bootloader at chip");
             exit(1);
         }
 #endif
-
     }
 }
 
 void STM32Flasher::getCommand() {
     if (is_port_open && is_connection_open) {
-        writeCommand(GET_COMMAND);
+        writeCommand(COMMAND_GET);
         checkResponse();
 
         std::cout << "Frame size: " << std::dec << +buffer->data[1] << std::endl;
         std::cout << "bootloader: " << std::hex << +buffer->data[2] << std::endl;
+
+        for (int i = 0; i < buffer->size; i++) {
+            if (buffer->data[i] == COMMAND_ERASE) {
+                eraseChipMode = BASIC_ERASE_MODE;
+            } else if (buffer->data[i] == COMMAND_EXTENDED_ERASE) {
+                eraseChipMode = EXTENDED_ERASE_MODE;
+            }
+        }
     }
 }
 
 void STM32Flasher::getVersionCommand() {
     if (is_port_open && is_connection_open) {
-        writeCommand(GET_VERSION_COMMAND);
+        writeCommand(COMMAND_GET_VERSION);
         checkResponse();
     }
 }
 
 void STM32Flasher::getIdCommand() {
     if (is_port_open && is_connection_open) {
-        writeCommand(GET_ID_COMMAND);
+        writeCommand(COMMAND_GET_ID);
         checkResponse();
     }
 }
 
 void STM32Flasher::readMemoryCommand(uint32_t start_address, uint8_t length) {
     if (is_port_open && is_connection_open) {
-        writeCommand(READ_MEMORY_COMMAND);
+        writeCommand(COMMAND_READ_MEMORY);
         checkResponse();
 
         // writing_buffer->data[0] = *((uint8_t *) &start_address + 3);
@@ -90,7 +97,7 @@ void STM32Flasher::readMemoryCommand(uint32_t start_address, uint8_t length) {
 
 void STM32Flasher::goCommand(uint32_t address) {
     if (is_port_open && is_connection_open) {
-        writeCommand(GO_COMMAND);
+        writeCommand(COMMAND_GO);
         checkResponse();
         writeAddress(address);
         checkResponse();
@@ -99,10 +106,12 @@ void STM32Flasher::goCommand(uint32_t address) {
 
 void STM32Flasher::flashCommand(uint32_t start_address, uint8_t *buffer, uint16_t length) {
     if (is_port_open && is_connection_open) {
-        writeCommand(WRITE_MEMORY_COMMAND);
+        writeCommand(COMMAND_WRITE_MEMORY);
         checkResponse();
         writeAddress(start_address);
-        checkResponse();
+        if (!checkResponse(ACK_AT_BEGIN)) {
+            exit(0);
+        }
         uart->addDataToBufferTX(length);
         uint8_t xor_checksum = 0x00;
         xor_checksum ^= length;
@@ -112,17 +121,30 @@ void STM32Flasher::flashCommand(uint32_t start_address, uint8_t *buffer, uint16_
         }
         uart->addDataToBufferTX(xor_checksum);
         uart->writeData();
-        checkResponse();
+        if (!checkResponse(ACK_AT_BEGIN)) {
+            exit(0);
+        }
     }
 }
 
 void STM32Flasher::eraseCommand() {
     if (is_port_open && is_connection_open) {
-        writeCommand(ERASE_COMMAND);
-        checkResponse();
+        if (eraseChipMode == BASIC_ERASE_MODE) {
+            writeCommand(COMMAND_ERASE);
+            checkResponse();
 
-        writeCommand(FULL_CHIP_ERASE_COMMAND);
-        checkResponse();
+            writeCommand(COMMAND_FULL_CHIP_ERASE);
+            checkResponse();
+        } else if (eraseChipMode == EXTENDED_ERASE_MODE) {
+            writeCommand(COMMAND_EXTENDED_ERASE);
+            checkResponse();
+
+            uart->addDataToBufferTX(COMMAND_FULL_CHIP_ERASE);
+            uart->addDataToBufferTX(COMMAND_FULL_CHIP_ERASE);
+            uart->addDataToBufferTX(0x00);
+            uart->writeData();
+            checkResponse();
+        }
     }
 }
 
@@ -155,7 +177,7 @@ void STM32Flasher::flashFile(uint8_t *data, uint16_t size) {
 
 void STM32Flasher::writeAddress(uint32_t address) {
     uint8_t xor_checksum = 0x00;
-    for (int i = 0; i < sizeof(uint32_t); i++) {
+    for (uint32_t i = 0; i < sizeof(uint32_t); i++) {
         uint8_t msb_byte = *((uint8_t *)&address + sizeof(uint32_t) - i - 1);
         uart->addDataToBufferTX(msb_byte);
         xor_checksum ^= msb_byte;
@@ -164,11 +186,16 @@ void STM32Flasher::writeAddress(uint32_t address) {
     uart->writeData();
 }
 
-uint8_t STM32Flasher::checkResponse(ack_pos pos) {
+uint8_t STM32Flasher::checkResponse(ack_pos pos, uint64_t timeout) {
     uint8_t ack_at_right_pos = false;
 
     if (is_port_open) {
-        buffer->size = uart->waitForFirstResponse(500);
+        if ((pos == ACK_AT_BEGIN) && (pos == NONE_ACK)) {
+            buffer->size = uart->waitForFirstResponse(timeout);
+        } else {
+            buffer->size = uart->waitForResponse(timeout);
+        }
+
         if (buffer->size > 0) {
             switch (pos) {
                 case NONE_ACK:
