@@ -3,8 +3,12 @@
 #include <chrono>
 #include <iostream>
 
-void printInfo(std::string info) {
-    std::cout << info << std::endl;
+void printInfo(std::string info, uint8_t writeNewLine = true) {
+    if (writeNewLine) {
+        std::cout << std::dec << info << std::endl;
+    } else {
+        std::cout << std::dec << info;
+    }
 }
 
 STM32Flasher::STM32Flasher(std::string port, int baudRate) {
@@ -46,14 +50,55 @@ void STM32Flasher::getCommand() {
         writeCommand(COMMAND_GET);
         checkResponse();
 
-        std::cout << "Frame size: " << std::dec << +buffer->data[1] << std::endl;
-        std::cout << "bootloader: " << std::hex << +buffer->data[2] << std::endl;
+        const uint8_t available_cmds_start_pos = 3;
+        const uint8_t available_cmds_size = buffer->data[1];
 
-        for (int i = 0; i < buffer->size; i++) {
-            if (buffer->data[i] == COMMAND_ERASE) {
-                eraseChipMode = BASIC_ERASE_MODE;
-            } else if (buffer->data[i] == COMMAND_EXTENDED_ERASE) {
-                eraseChipMode = EXTENDED_ERASE_MODE;
+        const uint8_t bootloader_version_1 = buffer->data[2] / 16;
+        const uint8_t bootloader_version_2 = buffer->data[2] % 16;
+
+        printInfo("Bootloader ver. " + std::to_string(bootloader_version_1) + "." + std::to_string(bootloader_version_2) + ", " + std::to_string(available_cmds_size) + " commands available:");
+
+        for (int i = 0; i < available_cmds_size; i++) {
+            printInfo("\t", false);
+            switch (buffer->data[available_cmds_start_pos + i]) {
+                case COMMAND_GET:
+                    printInfo("GET");
+                    break;
+                case COMMAND_GET_VERSION:
+                    printInfo("GET_VERSION");
+                    break;
+                case COMMAND_GET_ID:
+                    printInfo("GET_ID");
+                    break;
+                case COMMAND_READ_MEMORY:
+                    printInfo("READ_MEMORY");
+                    break;
+                case COMMAND_GO:
+                    printInfo("GO");
+                    break;
+                case COMMAND_WRITE_MEMORY:
+                    printInfo("WRITE_MEMORY");
+                    break;
+                case COMMAND_ERASE:
+                    printInfo("ERASE");
+                    eraseChipMode = BASIC_ERASE_MODE;
+                    break;
+                case COMMAND_EXTENDED_ERASE:
+                    printInfo("EXTENDED_ERASE");
+                    eraseChipMode = EXTENDED_ERASE_MODE;
+                    break;
+                case COMMAND_WRITE_PROTECT:
+                    printInfo("WRITE_PROTECT");
+                    break;
+                case COMMAND_WRITE_UNPROTECT:
+                    printInfo("WRITE_UNPROTECT");
+                    break;
+                case COMMAND_READOUT_PROTECT:
+                    printInfo("READOUT_PROTECT");
+                    break;
+                case COMMAND_READOUT_UNPROTECT:
+                    printInfo("READOUT_UNPROTECT");
+                    break;
             }
         }
     }
@@ -143,7 +188,7 @@ void STM32Flasher::eraseCommand() {
             uart->addDataToBufferTX(COMMAND_FULL_CHIP_ERASE);
             uart->addDataToBufferTX(0x00);
             uart->writeData();
-            checkResponse();
+            checkResponse(ACK_AT_END, 10000);
         }
     }
 }
@@ -167,8 +212,10 @@ void STM32Flasher::flashFile(uint8_t *data, uint16_t size) {
         uint32_t address = 0;
         eraseCommand();
         for (int page_counter = 0; page_counter < pages; page_counter++, address += 256) {
+            std::cout << "\rFlashing " << std::dec << page_counter << "/" << pages;
             flashCommand(0x8000000 + address, &data[address], 0xff);
         }
+        std::cout << "\rFlashing " << std::dec << pages << "/" << pages << std::endl;
         flashCommand(0x8000000 + address, &data[address], unfull_page_size - 1);
 
         goCommand(0x8000000);

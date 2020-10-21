@@ -33,13 +33,18 @@ class STM32Flasher {
     static const uint8_t COMMAND_WRITE_MEMORY =     0x31;
     static const uint8_t COMMAND_ERASE =            0x43;
     static const uint8_t COMMAND_EXTENDED_ERASE =   0x44;
+    static const uint8_t COMMAND_WRITE_PROTECT =    0x63;
+    static const uint8_t COMMAND_WRITE_UNPROTECT =  0x73;
+    static const uint8_t COMMAND_READOUT_PROTECT =  0x82;
+    static const uint8_t COMMAND_READOUT_UNPROTECT= 0x92;
+
     static const uint8_t COMMAND_FULL_CHIP_ERASE =  0xFF;
 
     static const uint8_t NONE_ERASE_MODE =          0x00;
     static const uint8_t BASIC_ERASE_MODE =         0x01;
     static const uint8_t EXTENDED_ERASE_MODE =      0x02;
 
-    static const uint64_t DEFAULT_TIMEOUT =         1500;
+    static const uint64_t DEFAULT_TIMEOUT =         500;
 
     UARTLink *uart;
 
