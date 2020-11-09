@@ -229,7 +229,9 @@ void STM32Flasher::eraseCommand() {
             uart->addDataToBufferTX(COMMAND_FULL_CHIP_ERASE);
             uart->addDataToBufferTX(0x00);
             uart->writeData();
-            checkResponse(ACK_AT_END, 10000);
+            if (!checkResponse(ACK_AT_BEGIN, 10000)) {
+                exit(0);
+            }
         }
     }
 }
