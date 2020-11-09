@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 
+
 void printInfo(std::string info, uint8_t writeNewLine = true) {
     if (writeNewLine) {
         std::cout << std::dec << info << std::endl;
@@ -14,11 +15,13 @@ void printInfo(std::string info, uint8_t writeNewLine = true) {
 STM32Flasher::STM32Flasher(std::string port, int baudRate) {
     uart = new UARTLink(port, baudRate);
     is_port_open = uart->openPort();
+    openBootloader();
     //  uint8_t *buffer = uart->getBuff();
     buffer = uart->getBuff();
     //writing_buffer = &uart->writing_buffer;
 
     openConnection();
+
     getCommand();
 
     //readMemoryCommand(0x8000000, 0xFF);
@@ -44,6 +47,42 @@ void STM32Flasher::openConnection() {
 #endif
     }
 }
+
+#ifdef _WIN32
+    #include <windows.h>
+
+    void sleep(unsigned milliseconds)
+    {
+        Sleep(milliseconds);
+    }
+#else
+    #include <unistd.h>
+
+    void sleep(unsigned milliseconds)
+    {
+        usleep(milliseconds * 1000); // takes microseconds
+    }
+#endif
+
+//DTR-ENALBE - 0V
+//DTR-DISABLE - 3V3
+
+//RTS-ENALBE - 0V
+//RTS-DISABLE - 3V3
+
+
+
+void STM32Flasher::openBootloader(){
+    uart->disableDTR();
+    uart->disableRTS();
+    sleep(100);
+    uart->enableRTS();
+    sleep(1000);
+    uart->disableRTS();
+    sleep(100);
+    uart->enableDTR();
+}
+
 
 void STM32Flasher::getCommand() {
     if (is_port_open && is_connection_open) {
@@ -152,7 +191,9 @@ void STM32Flasher::goCommand(uint32_t address) {
 void STM32Flasher::flashCommand(uint32_t start_address, uint8_t *buffer, uint16_t length) {
     if (is_port_open && is_connection_open) {
         writeCommand(COMMAND_WRITE_MEMORY);
-        checkResponse();
+        if (!checkResponse(ACK_AT_BEGIN)) {
+            exit(0);
+        }
         writeAddress(start_address);
         if (!checkResponse(ACK_AT_BEGIN)) {
             exit(0);
@@ -237,7 +278,7 @@ uint8_t STM32Flasher::checkResponse(ack_pos pos, uint64_t timeout) {
     uint8_t ack_at_right_pos = false;
 
     if (is_port_open) {
-        if ((pos == ACK_AT_BEGIN) && (pos == NONE_ACK)) {
+        if ((pos == ACK_AT_BEGIN) || (pos == NONE_ACK)) {
             buffer->size = uart->waitForFirstResponse(timeout);
         } else {
             buffer->size = uart->waitForResponse(timeout);

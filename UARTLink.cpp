@@ -130,15 +130,15 @@ int UARTLink::waitForResponse(uint64_t timeout) {
 }
 
 int UARTLink::waitForFirstResponse(uint64_t timeout) {
-    auto start = std::chrono::system_clock::now();
+   // auto start = std::chrono::system_clock::now();
 
-    auto end = start;
+   // auto end = start;
 
-    std::chrono::milliseconds ms{timeout};
+   // std::chrono::milliseconds ms{timeout};
 
     reading_buffer.size = 0;
     while ((reading_buffer.size == 0)) {
-        end = std::chrono::system_clock::now();
+        //end = std::chrono::system_clock::now();
 
         if (port_opened) {
             reading_buffer.size += RS232_PollComport(com_port, reading_buffer.data + reading_buffer.size, reading_buffer.max_size);
@@ -172,4 +172,19 @@ void UARTLink::printData(std::string prefix, buffer_struct buffer) {
         }
     }
     std::cout << std::endl;
+}
+
+
+
+void UARTLink::enableDTR(){
+    RS232_enableDTR(com_port);
+}
+void UARTLink::disableDTR(){
+    RS232_disableDTR(com_port);
+}
+void UARTLink::enableRTS(){
+    RS232_enableRTS(com_port);
+}
+void UARTLink::disableRTS(){
+    RS232_disableRTS(com_port);
 }

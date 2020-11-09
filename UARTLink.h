@@ -35,6 +35,11 @@ class UARTLink {
 
     void setSpeed();
 
+    void enableDTR();
+    void disableDTR();
+    void enableRTS();
+    void disableRTS();
+
     void writeData();
     //void writeData(uint8_t byte);
 
@@ -57,6 +62,7 @@ class UARTLink {
     //     uint16_t size;
     //     uint16_t max_size;
     // } buffer;
+
 
    private:
     std::string port;

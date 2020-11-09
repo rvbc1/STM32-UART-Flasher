@@ -1,7 +1,7 @@
 all: compile
 
 compile:
-	g++ -o STM32-UART-Flasher -Wall *.cpp *.c
+	g++ -std=c++17 -o STM32-UART-Flasher -Wall *.cpp *.c
 
 run:
 	./main

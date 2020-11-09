@@ -73,6 +73,8 @@ class STM32Flasher {
     void writeCommand(uint8_t command);
     void writeAddress(uint32_t address);
     uint8_t checkResponse(ack_pos pos = NONE_ACK, uint64_t timeout = DEFAULT_TIMEOUT);
+
+    void openBootloader();
 };
 
 #endif
