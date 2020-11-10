@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc == 3) {
-     STM32Flasher *flasher = new STM32Flasher(std::string(argv[2]));
+        STM32Flasher *flasher = new STM32Flasher(std::string(argv[2]));
 
         FileReader *file = new FileReader(argv[1]);
 

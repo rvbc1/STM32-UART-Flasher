@@ -51,14 +51,14 @@ void STM32Flasher::openConnection() {
 #ifdef _WIN32
     #include <windows.h>
 
-    void sleep(unsigned milliseconds)
+    void sleep_milis(unsigned milliseconds)
     {
         Sleep(milliseconds);
     }
 #else
     #include <unistd.h>
 
-    void sleep(unsigned milliseconds)
+    void sleep_milis(unsigned milliseconds)
     {
         usleep(milliseconds * 1000); // takes microseconds
     }
@@ -75,11 +75,9 @@ void STM32Flasher::openConnection() {
 void STM32Flasher::openBootloader(){
     uart->disableDTR();
     uart->disableRTS();
-    sleep(100);
+
     uart->enableRTS();
-    sleep(1000);
     uart->disableRTS();
-    sleep(100);
     uart->enableDTR();
 }
 
