@@ -6,6 +6,7 @@
 #include "FileReader.h"
 #include "UARTLink.h"
 
+#define PAGE_SIZE 256
 #define DEFAULT_BAUD_RATE_STM_FLASHER 115200
 
 class STM32Flasher {

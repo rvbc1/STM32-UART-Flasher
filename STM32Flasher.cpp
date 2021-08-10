@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <iostream>
-
+#include <thread>
 
 void printInfo(std::string info, uint8_t writeNewLine = true) {
     if (writeNewLine) {
@@ -16,9 +16,7 @@ STM32Flasher::STM32Flasher(std::string port, int baudRate) {
     uart = new UARTLink(port, baudRate);
     is_port_open = uart->openPort();
     openBootloader();
-    //  uint8_t *buffer = uart->getBuff();
     buffer = uart->getBuff();
-    //writing_buffer = &uart->writing_buffer;
 
     openConnection();
 
@@ -48,21 +46,6 @@ void STM32Flasher::openConnection() {
     }
 }
 
-#ifdef _WIN32
-    #include <windows.h>
-
-    void sleep_milis(unsigned milliseconds)
-    {
-        Sleep(milliseconds);
-    }
-#else
-    #include <unistd.h>
-
-    void sleep_milis(unsigned milliseconds)
-    {
-        usleep(milliseconds * 1000); // takes microseconds
-    }
-#endif
 
 //DTR-ENALBE - 0V
 //DTR-DISABLE - 3V3
@@ -70,17 +53,18 @@ void STM32Flasher::openConnection() {
 //RTS-ENALBE - 0V
 //RTS-DISABLE - 3V3
 
-
-
-void STM32Flasher::openBootloader(){
+void STM32Flasher::openBootloader() {
     uart->disableDTR();
     uart->disableRTS();
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
     uart->enableRTS();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     uart->disableRTS();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     uart->enableDTR();
 }
-
 
 void STM32Flasher::getCommand() {
     if (is_port_open && is_connection_open) {
@@ -160,15 +144,6 @@ void STM32Flasher::readMemoryCommand(uint32_t start_address, uint8_t length) {
         writeCommand(COMMAND_READ_MEMORY);
         checkResponse();
 
-        // writing_buffer->data[0] = *((uint8_t *) &start_address + 3);
-        // writing_buffer->data[0] = *((uint8_t *) &start_address + 3);
-        // writing_buffer->data[0] = *((uint8_t *) &start_address + 3);
-
-        // uart->writeData(*((uint8_t *) &start_address + 2));
-        // uart->writeData(*((uint8_t *) &start_address + 1));
-        // uart->writeData(*((uint8_t *) &start_address + 0));
-
-        // uart->writeData(0x08);
         writeAddress(start_address);
         checkResponse();
 
@@ -248,16 +223,29 @@ void STM32Flasher::flashFile(FileReader::file_struct file) {
 
 void STM32Flasher::flashFile(uint8_t *data, uint16_t size) {
     if (is_port_open && is_connection_open) {
-        uint16_t pages = size / 256;
-        uint16_t unfull_page_size = size - pages * 256;
+        uint16_t pages = size / PAGE_SIZE;
+        uint16_t unfull_page_size = size - pages * PAGE_SIZE;
         uint32_t address = 0;
+
+        uint8_t unfullPageExists = false;
+        if ((unfull_page_size > 0)) {
+            unfullPageExists = true;
+        }
+
         eraseCommand();
-        for (int page_counter = 0; page_counter < pages; page_counter++, address += 256) {
-            std::cout << "\rFlashing " << std::dec << page_counter << "/" << pages;
+        for (int page_counter = 0; page_counter < pages; page_counter++, address += PAGE_SIZE) {
+            if (unfullPageExists) {
+                std::cout << "Flashing " << std::dec << page_counter << "/" << pages << std::endl;
+            } else {
+                std::cout << "Flashing " << std::dec << page_counter << "/" << pages - 1 << std::endl;
+            }
+
             flashCommand(0x8000000 + address, &data[address], 0xff);
         }
-        std::cout << "\rFlashing " << std::dec << pages << "/" << pages << std::endl;
-        flashCommand(0x8000000 + address, &data[address], unfull_page_size - 1);
+        if (unfullPageExists) {
+            std::cout << "Flashing " << std::dec << pages << "/" << pages << std::endl;
+            flashCommand(0x8000000 + address, &data[address], unfull_page_size - 1);
+        }
 
         goCommand(0x8000000);
     }
